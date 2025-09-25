@@ -1,19 +1,22 @@
 {
-  "name": "n8n-nodes-<...>",
+  "name": "n8n-nodes-longcat",
   "version": "0.1.0",
-  "description": "",
+  "description": "n8n node for LongCat API integration",
   "keywords": [
-    "n8n-community-node-package"
+    "n8n-community-node-package",
+    "longcat",
+    "ai",
+    "chat",
+    "llm"
   ],
   "license": "MIT",
-  "homepage": "",
+  "homepage": "https://github.com/OfficialMoAdel/n8n-nodes-longcat",
   "author": {
-    "name": "",
-    "email": ""
+    "name": "OfficialMoAdel"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/<...>/n8n-nodes-<...>.git"
+    "url": "https://github.com/OfficialMoAdel//n8n-nodes-longcat.git"
   },
   "engines": {
     "node": ">=20.15"
@@ -33,12 +36,10 @@
   "n8n": {
     "n8nNodesApiVersion": 1,
     "credentials": [
-      "dist/credentials/ExampleCredentialsApi.credentials.js",
-      "dist/credentials/HttpBinApi.credentials.js"
+      "dist/credentials/LongCatApi.credentials.js"
     ],
     "nodes": [
-      "dist/nodes/ExampleNode/ExampleNode.node.js",
-      "dist/nodes/HttpBin/HttpBin.node.js"
+      "dist/nodes/LongCat/LongCat.node.js"
     ]
   },
   "devDependencies": {
