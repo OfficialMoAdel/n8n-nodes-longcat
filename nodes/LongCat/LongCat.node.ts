@@ -75,16 +75,23 @@ export class LongCat implements INodeType {
                 default: {},
                 options: [
                     {
-                        displayName: 'Temperature',
-                        name: 'temperature',
-                        type: 'number',
-                        typeOptions: {
-                            minValue: 0,
-                            maxValue: 2,
-                            numberPrecision: 1,
+                        displayName: 'AI Tool Mode',
+                        name: 'aiToolMode',
+                        type: 'boolean',
+                        default: false,
+                        description: 'Whether to enable AI tool mode for better integration with AI agents',
+                    },
+                    {
+                        displayName: 'Enable Thinking',
+                        name: 'enableThinking',
+                        type: 'boolean',
+                        default: false,
+                        displayOptions: {
+                            show: {
+                                model: ['LongCat-Flash-Thinking'],
+                            },
                         },
-                        default: 0.7,
-                        description: 'Controls randomness. Lower values are more deterministic, higher values are more creative.',
+                        description: 'Whether to enable thinking mode for the LongCat-Flash-Thinking model',
                     },
                     {
                         displayName: 'Max Tokens',
@@ -96,46 +103,7 @@ export class LongCat implements INodeType {
                             numberPrecision: 0,
                         },
                         default: 1024,
-                        description: 'The maximum number of tokens to generate in the response.',
-                    },
-                    // Thinking model specific options
-                    {
-                        displayName: 'Enable Thinking',
-                        name: 'enableThinking',
-                        type: 'boolean',
-                        default: false,
-                        displayOptions: {
-                            show: {
-                                model: ['LongCat-Flash-Thinking'],
-                            },
-                        },
-                        description: 'Enable thinking mode for the LongCat-Flash-Thinking model.',
-                    },
-                    {
-                        displayName: 'Thinking Budget',
-                        name: 'thinkingBudget',
-                        type: 'number',
-                        typeOptions: {
-                            minValue: 1024,
-                            maxValue: 4096,
-                            numberPrecision: 0,
-                        },
-                        default: 1024,
-                        displayOptions: {
-                            show: {
-                                model: ['LongCat-Flash-Thinking'],
-                                enableThinking: [true],
-                            },
-                        },
-                        description: 'Maximum length of thinking content (minimum 1024).',
-                    },
-                    // AI Agent specific options
-                    {
-                        displayName: 'AI Tool Mode',
-                        name: 'aiToolMode',
-                        type: 'boolean',
-                        default: false,
-                        description: 'Enable AI tool mode for better integration with AI agents.',
+                        description: 'The maximum number of tokens to generate in the response',
                     },
                     {
                         displayName: 'Response Format',
@@ -159,7 +127,37 @@ export class LongCat implements INodeType {
                                 aiToolMode: [true],
                             },
                         },
-                        description: 'Response format for AI tool usage.',
+                        description: 'Response format for AI tool usage',
+                    },
+                    {
+                        displayName: 'Temperature',
+                        name: 'temperature',
+                        type: 'number',
+                        typeOptions: {
+                            minValue: 0,
+                            maxValue: 2,
+                            numberPrecision: 1,
+                        },
+                        default: 0.7,
+                        description: 'Controls randomness. Lower values are more deterministic, higher values are more creative.',
+                    },
+                    {
+                        displayName: 'Thinking Budget',
+                        name: 'thinkingBudget',
+                        type: 'number',
+                        typeOptions: {
+                            minValue: 1024,
+                            maxValue: 4096,
+                            numberPrecision: 0,
+                        },
+                        default: 1024,
+                        displayOptions: {
+                            show: {
+                                model: ['LongCat-Flash-Thinking'],
+                                enableThinking: [true],
+                            },
+                        },
+                        description: 'Maximum length of thinking content (minimum 1024)',
                     },
                 ],
             },
