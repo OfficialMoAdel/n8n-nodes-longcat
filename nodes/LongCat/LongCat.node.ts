@@ -33,16 +33,26 @@ export class LongCat implements INodeType {
                 options: [
                     {
                         name: 'LongCat-Flash-Chat',
-                        value: 'LongCat-Flash-Chat',
+                        value: 'longcat-flash-chat',
                         description: 'Standard chat model',
                     },
                     {
                         name: 'LongCat-Flash-Thinking',
-                        value: 'LongCat-Flash-Thinking',
+                        value: 'longcat-flash-thinkingai-tx-0921-ppo',
                         description: 'Chat model with thinking capabilities',
                     },
+                    {
+                        name: 'LongCat-Flash-Chat (Tool Enabled)',
+                        value: 'longcat-flash-chat-tool',
+                        description: 'Chat model with tool calling support',
+                    },
+                    {
+                        name: 'LongCat-Flash-Thinking (Tool Enabled)',
+                        value: 'longcat-flash-thinkingai-tx-0921-ppo-tool',
+                        description: 'Thinking model with tool calling support',
+                    },
                 ],
-                default: 'LongCat-Flash-Chat',
+                default: 'longcat-flash-chat',
                 description: 'The LongCat model to use',
             },
             {
@@ -100,6 +110,85 @@ export class LongCat implements INodeType {
                 },
                 description: 'Response format for AI tool usage',
             },
+            // Tools parameter for function calling
+            {
+                displayName: 'Tools',
+                name: 'tools',
+                type: 'fixedCollection',
+                typeOptions: {
+                    multipleValues: true,
+                },
+                default: {},
+                displayOptions: {
+                    show: {
+                        model: ['longcat-flash-chat-tool', 'longcat-flash-thinkingai-tx-0921-ppo-tool'],
+                    },
+                },
+                description: 'Define functions that the AI can call',
+                options: [
+                    {
+                        name: 'tool',
+                        displayName: 'Tool',
+                        values: [
+                            {
+                                displayName: 'Function Name',
+                                name: 'name',
+                                type: 'string',
+                                default: '',
+                                description: 'The name of the function',
+                                required: true,
+                            },
+                            {
+                                displayName: 'Description',
+                                name: 'description',
+                                type: 'string',
+                                default: '',
+                                description: 'A description of what the function does',
+                            },
+                            {
+                                displayName: 'Parameters',
+                                name: 'parameters',
+                                type: 'json',
+                                default: '{}',
+                                description: 'JSON schema defining the function parameters',
+                                typeOptions: {
+                                    rows: 4,
+                                },
+                            },
+                        ],
+                    },
+                ],
+            },
+            // Tool Choice parameter
+            {
+                displayName: 'Tool Choice',
+                name: 'toolChoice',
+                type: 'options',
+                options: [
+                    {
+                        name: 'None',
+                        value: 'none',
+                        description: 'The model will not call any tools',
+                    },
+                    {
+                        name: 'Auto',
+                        value: 'auto',
+                        description: 'The model can choose to call tools or not',
+                    },
+                    {
+                        name: 'Required',
+                        value: 'required',
+                        description: 'The model must call at least one tool',
+                    },
+                ],
+                default: 'auto',
+                displayOptions: {
+                    show: {
+                        model: ['longcat-flash-chat-tool', 'longcat-flash-thinkingai-tx-0921-ppo-tool'],
+                    },
+                },
+                description: 'Control whether the model should use tools',
+            },
             // Moved Enable Thinking outside collection
             {
                 displayName: 'Enable Thinking',
@@ -108,7 +197,7 @@ export class LongCat implements INodeType {
                 default: false,
                 displayOptions: {
                     show: {
-                        model: ['LongCat-Flash-Thinking'],
+                        model: ['longcat-flash-thinkingai-tx-0921-ppo', 'longcat-flash-thinkingai-tx-0921-ppo-tool'],
                     },
                 },
                 description: 'Whether to enable thinking mode for the LongCat-Flash-Thinking model',
@@ -126,7 +215,7 @@ export class LongCat implements INodeType {
                 default: 1024,
                 displayOptions: {
                     show: {
-                        model: ['LongCat-Flash-Thinking'],
+                        model: ['longcat-flash-thinkingai-tx-0921-ppo', 'longcat-flash-thinkingai-tx-0921-ppo-tool'],
                         enableThinking: [true],
                     },
                 },
@@ -179,12 +268,16 @@ export class LongCat implements INodeType {
                 const systemPrompt = this.getNodeParameter('systemPrompt', i, '') as string;
                 const userMessage = this.getNodeParameter('userMessage', i) as string;
                 const options = this.getNodeParameter('options', i, {}) as any;
-                
+
                 // Get parameters that were moved outside collection
                 const aiToolMode = this.getNodeParameter('aiToolMode', i, false) as boolean;
                 const responseFormat = this.getNodeParameter('responseFormat', i, 'text') as string;
                 const enableThinking = this.getNodeParameter('enableThinking', i, false) as boolean;
                 const thinkingBudget = this.getNodeParameter('thinkingBudget', i, 1024) as number;
+
+                // Get tool-related parameters
+                const tools = this.getNodeParameter('tools', i, {}) as any;
+                const toolChoice = this.getNodeParameter('toolChoice', i, 'auto') as string;
 
                 const credentials = await this.getCredentials('longCatApi');
 
@@ -222,11 +315,25 @@ export class LongCat implements INodeType {
                 }
 
                 // Add thinking model specific parameters
-                if (model === 'LongCat-Flash-Thinking') {
+                if (model === 'longcat-flash-thinkingai-tx-0921-ppo' || model === 'longcat-flash-thinkingai-tx-0921-ppo-tool') {
                     body.enable_thinking = enableThinking;
                     if (enableThinking) {
                         body.thinking_budget = Math.max(1024, thinkingBudget);
                     }
+                }
+
+                // Add tools if using tool-enabled models
+                if ((model === 'longcat-flash-chat-tool' || model === 'longcat-flash-thinkingai-tx-0921-ppo-tool') && tools.tool && tools.tool.length > 0) {
+                    const formattedTools = tools.tool.map((tool: any) => ({
+                        type: 'function',
+                        function: {
+                            name: tool.name,
+                            description: tool.description || '',
+                            parameters: tool.parameters ? JSON.parse(tool.parameters) : {},
+                        },
+                    }));
+                    body.tools = formattedTools;
+                    body.tool_choice = toolChoice;
                 }
 
                 // Make API request
@@ -241,7 +348,9 @@ export class LongCat implements INodeType {
                     json: true,
                 });
 
-                const content = response.choices?.[0]?.message?.content || '';
+                const message = response.choices?.[0]?.message;
+                const content = message?.content || '';
+                const toolCalls = message?.tool_calls || [];
 
                 // Enhanced response for AI agents
                 let processedContent = content;
@@ -260,23 +369,39 @@ export class LongCat implements INodeType {
                     }
                 }
 
-                returnData.push({
-                    json: {
-                        id: response.id,
-                        model: response.model,
-                        content: processedContent,
-                        usage: response.usage,
-                        finishReason: response.choices?.[0]?.finish_reason,
-                        // AI agent specific fields
-                        aiToolMode: aiToolMode,
-                        responseFormat: responseFormat,
-                        timestamp: new Date().toISOString(),
-                        metadata: {
-                            provider: 'LongCat',
-                            modelType: model,
-                            hasThinking: model === 'LongCat-Flash-Thinking' && enableThinking,
-                        },
+                // Build response object
+                const responseData: any = {
+                    id: response.id,
+                    model: response.model,
+                    content: processedContent,
+                    usage: response.usage,
+                    finishReason: response.choices?.[0]?.finish_reason,
+                    // AI agent specific fields
+                    aiToolMode: aiToolMode,
+                    responseFormat: responseFormat,
+                    timestamp: new Date().toISOString(),
+                    metadata: {
+                        provider: 'LongCat',
+                        modelType: model,
+                        hasThinking: (model === 'longcat-flash-thinkingai-tx-0921-ppo' || model === 'longcat-flash-thinkingai-tx-0921-ppo-tool') && enableThinking,
+                        hasTools: (model === 'longcat-flash-chat-tool' || model === 'longcat-flash-thinkingai-tx-0921-ppo-tool'),
                     },
+                };
+
+                // Add tool calls if present
+                if (toolCalls && toolCalls.length > 0) {
+                    responseData.toolCalls = toolCalls.map((call: any) => ({
+                        id: call.id,
+                        type: call.type,
+                        function: {
+                            name: call.function.name,
+                            arguments: call.function.arguments,
+                        },
+                    }));
+                }
+
+                returnData.push({
+                    json: responseData,
                 });
             } catch (error) {
                 if (this.continueOnFail()) {
