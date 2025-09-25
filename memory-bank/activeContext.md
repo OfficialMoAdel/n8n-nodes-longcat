@@ -2,10 +2,11 @@
 
 ## Current Work Focus
 
-The project is in a stable state following successful dependency installation. The primary focus is on maintaining code quality and addressing any outstanding technical debt from dependency warnings and security vulnerabilities.
+The project has been updated to resolve a critical n8n workflow saving issue. The primary focus is now on maintaining code quality and addressing any outstanding technical debt from dependency warnings and security vulnerabilities.
 
 ## Recent Changes
 
+- **Workflow Saving Fix**: Removed `displayOptions` from child parameters in the Options collection to resolve "Could not resolve parameter dependencies" error in n8n workflows
 - **Dependency Installation**: Successfully ran `npm install` with 336 packages installed
 - **Security Audit**: Identified 2 critical vulnerabilities in peer dependency `n8n-workflow` (related to `form-data` package)
 - **Audit Fix Attempt**: Ran `npm audit fix` but vulnerabilities remain unfixed due to peer dependency constraints

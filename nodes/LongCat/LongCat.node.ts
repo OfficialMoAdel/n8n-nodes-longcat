@@ -67,6 +67,72 @@ export class LongCat implements INodeType {
                 placeholder: 'Enter your message here...',
                 description: 'The user message to send to LongCat',
             },
+            // Moved AI Tool Mode outside collection
+            {
+                displayName: 'AI Tool Mode',
+                name: 'aiToolMode',
+                type: 'boolean',
+                default: false,
+                description: 'Whether to enable AI tool mode for better integration with AI agents',
+            },
+            // Moved Response Format outside collection
+            {
+                displayName: 'Response Format',
+                name: 'responseFormat',
+                type: 'options',
+                options: [
+                    {
+                        name: 'Text',
+                        value: 'text',
+                        description: 'Plain text response',
+                    },
+                    {
+                        name: 'JSON',
+                        value: 'json',
+                        description: 'JSON formatted response',
+                    },
+                ],
+                default: 'text',
+                displayOptions: {
+                    show: {
+                        aiToolMode: [true],
+                    },
+                },
+                description: 'Response format for AI tool usage',
+            },
+            // Moved Enable Thinking outside collection
+            {
+                displayName: 'Enable Thinking',
+                name: 'enableThinking',
+                type: 'boolean',
+                default: false,
+                displayOptions: {
+                    show: {
+                        model: ['LongCat-Flash-Thinking'],
+                    },
+                },
+                description: 'Whether to enable thinking mode for the LongCat-Flash-Thinking model',
+            },
+            // Moved Thinking Budget outside collection
+            {
+                displayName: 'Thinking Budget',
+                name: 'thinkingBudget',
+                type: 'number',
+                typeOptions: {
+                    minValue: 1024,
+                    maxValue: 4096,
+                    numberPrecision: 0,
+                },
+                default: 1024,
+                displayOptions: {
+                    show: {
+                        model: ['LongCat-Flash-Thinking'],
+                        enableThinking: [true],
+                    },
+                },
+                description: 'Maximum length of thinking content (minimum 1024)',
+            },
+            // Simplified collection without conditional parameters
             {
                 displayName: 'Options',
                 name: 'options',
@@ -74,25 +140,6 @@ export class LongCat implements INodeType {
                 placeholder: 'Add Option',
                 default: {},
                 options: [
-                    {
-                        displayName: 'AI Tool Mode',
-                        name: 'aiToolMode',
-                        type: 'boolean',
-                        default: false,
-                        description: 'Whether to enable AI tool mode for better integration with AI agents',
-                    },
-                    {
-                        displayName: 'Enable Thinking',
-                        name: 'enableThinking',
-                        type: 'boolean',
-                        default: false,
-                        displayOptions: {
-                            show: {
-                                model: ['LongCat-Flash-Thinking'],
-                            },
-                        },
-                        description: 'Whether to enable thinking mode for the LongCat-Flash-Thinking model',
-                    },
                     {
                         displayName: 'Max Tokens',
                         name: 'maxTokens',
@@ -106,30 +153,6 @@ export class LongCat implements INodeType {
                         description: 'The maximum number of tokens to generate in the response',
                     },
                     {
-                        displayName: 'Response Format',
-                        name: 'responseFormat',
-                        type: 'options',
-                        options: [
-                            {
-                                name: 'Text',
-                                value: 'text',
-                                description: 'Plain text response',
-                            },
-                            {
-                                name: 'JSON',
-                                value: 'json',
-                                description: 'JSON formatted response',
-                            },
-                        ],
-                        default: 'text',
-                        displayOptions: {
-                            show: {
-                                aiToolMode: [true],
-                            },
-                        },
-                        description: 'Response format for AI tool usage',
-                    },
-                    {
                         displayName: 'Temperature',
                         name: 'temperature',
                         type: 'number',
@@ -140,24 +163,6 @@ export class LongCat implements INodeType {
                         },
                         default: 0.7,
                         description: 'Controls randomness. Lower values are more deterministic, higher values are more creative.',
-                    },
-                    {
-                        displayName: 'Thinking Budget',
-                        name: 'thinkingBudget',
-                        type: 'number',
-                        typeOptions: {
-                            minValue: 1024,
-                            maxValue: 4096,
-                            numberPrecision: 0,
-                        },
-                        default: 1024,
-                        displayOptions: {
-                            show: {
-                                model: ['LongCat-Flash-Thinking'],
-                                enableThinking: [true],
-                            },
-                        },
-                        description: 'Maximum length of thinking content (minimum 1024)',
                     },
                 ],
             },
@@ -174,6 +179,12 @@ export class LongCat implements INodeType {
                 const systemPrompt = this.getNodeParameter('systemPrompt', i, '') as string;
                 const userMessage = this.getNodeParameter('userMessage', i) as string;
                 const options = this.getNodeParameter('options', i, {}) as any;
+                
+                // Get parameters that were moved outside collection
+                const aiToolMode = this.getNodeParameter('aiToolMode', i, false) as boolean;
+                const responseFormat = this.getNodeParameter('responseFormat', i, 'text') as string;
+                const enableThinking = this.getNodeParameter('enableThinking', i, false) as boolean;
+                const thinkingBudget = this.getNodeParameter('thinkingBudget', i, 1024) as number;
 
                 const credentials = await this.getCredentials('longCatApi');
 
@@ -212,11 +223,9 @@ export class LongCat implements INodeType {
 
                 // Add thinking model specific parameters
                 if (model === 'LongCat-Flash-Thinking') {
-                    if (options.enableThinking !== undefined) {
-                        body.enable_thinking = options.enableThinking;
-                    }
-                    if (options.enableThinking && options.thinkingBudget !== undefined) {
-                        body.thinking_budget = Math.max(1024, options.thinkingBudget);
+                    body.enable_thinking = enableThinking;
+                    if (enableThinking) {
+                        body.thinking_budget = Math.max(1024, thinkingBudget);
                     }
                 }
 
@@ -235,9 +244,6 @@ export class LongCat implements INodeType {
                 const content = response.choices?.[0]?.message?.content || '';
 
                 // Enhanced response for AI agents
-                const aiToolMode = options.aiToolMode || false;
-                const responseFormat = options.responseFormat || 'text';
-
                 let processedContent = content;
                 if (aiToolMode && responseFormat === 'json') {
                     try {
@@ -268,7 +274,7 @@ export class LongCat implements INodeType {
                         metadata: {
                             provider: 'LongCat',
                             modelType: model,
-                            hasThinking: model === 'LongCat-Flash-Thinking' && options.enableThinking,
+                            hasThinking: model === 'LongCat-Flash-Thinking' && enableThinking,
                         },
                     },
                 });
