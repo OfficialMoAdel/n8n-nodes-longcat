@@ -6,6 +6,7 @@ The project has been updated to resolve a critical n8n workflow saving issue. Th
 
 ## Recent Changes
 
+- **Version Bump**: Updated package version from 0.1.0 to 0.1.1 to enable publishing after workflow saving fix
 - **Workflow Saving Fix**: Removed `displayOptions` from child parameters in the Options collection to resolve "Could not resolve parameter dependencies" error in n8n workflows
 - **Dependency Installation**: Successfully ran `npm install` with 336 packages installed
 - **Security Audit**: Identified 2 critical vulnerabilities in peer dependency `n8n-workflow` (related to `form-data` package)
