@@ -65,34 +65,22 @@ export class LongCat implements INodeType {
                 default: {},
                 options: [
                     {
-                        displayName: 'System Prompt',
-                        name: 'systemPrompt',
-                        type: 'string',
-                        typeOptions: {
-                            rows: 4,
-                        },
-                        default: '',
-                        placeholder: 'You are a helpful assistant that responds accurately and helpfully.',
-                        description: 'The system prompt to set the behavior of the AI. Leave empty to use default behavior.',
-                    },
-                    {
                         displayName: 'AI Agent Integration',
                         name: 'aiAgentMode',
                         type: 'boolean',
                         default: false,
-                        description: 'Enable enhanced compatibility with n8n AI Agent nodes',
+                        description: 'Whether to enable enhanced compatibility with n8n AI Agent nodes',
                     },
                     {
-                        displayName: 'Tool Usage Support',
-                        name: 'toolUsage',
-                        type: 'boolean',
-                        default: false,
-                        displayOptions: {
-                            show: {
-                                aiAgentMode: [true],
-                            },
+                        displayName: 'Conversation History',
+                        name: 'conversationHistory',
+                        type: 'string',
+                        typeOptions: {
+                            rows: 3,
                         },
-                        description: 'Enable PACKAGES_ALLOW_TOOL_USAGE for AI agent tool calling',
+                        default: '',
+                        placeholder: '{{ $json.conversationHistory }}',
+                        description: 'Optional conversation history for context. Should be a JSON array of messages.',
                     },
                     {
                         displayName: 'Enable Thinking',
@@ -107,6 +95,13 @@ export class LongCat implements INodeType {
                         description: 'Whether to enable thinking mode for the LongCat-Flash-Thinking model',
                     },
                     {
+                        displayName: 'Include Input Data',
+                        name: 'includeInputData',
+                        type: 'boolean',
+                        default: false,
+                        description: 'Whether to include original input data in the output for downstream processing',
+                    },
+                    {
                         displayName: 'Max Tokens',
                         name: 'maxTokens',
                         type: 'number',
@@ -115,7 +110,7 @@ export class LongCat implements INodeType {
                             maxValue: 8192,
                             numberPrecision: 0,
                         },
-                        default: 2048,
+                        default: 1024,
                         description: 'The maximum number of tokens to generate in the response',
                     },
                     {
@@ -148,6 +143,17 @@ export class LongCat implements INodeType {
                         description: 'Response format for AI agent usage',
                     },
                     {
+                        displayName: 'System Prompt',
+                        name: 'systemPrompt',
+                        type: 'string',
+                        typeOptions: {
+                            rows: 4,
+                        },
+                        default: '',
+                        placeholder: 'You are a helpful assistant that responds accurately and helpfully.',
+                        description: 'The system prompt to set the behavior of the AI. Leave empty to use default behavior.',
+                    },
+                    {
                         displayName: 'Temperature',
                         name: 'temperature',
                         type: 'number',
@@ -160,6 +166,36 @@ export class LongCat implements INodeType {
                         description: 'Controls randomness. Lower values are more deterministic, higher values are more creative.',
                     },
                     {
+                        displayName: 'Thinking Budget',
+                        name: 'thinkingBudget',
+                        type: 'number',
+                        typeOptions: {
+                            minValue: 1024,
+                            maxValue: 8192,
+                            numberPrecision: 0,
+                        },
+                        default: 1024,
+                        displayOptions: {
+                            show: {
+                                model: ['LongCat-Flash-Thinking'],
+                                enableThinking: [true],
+                            },
+                        },
+                        description: 'Maximum length of thinking content (minimum 1024)',
+                    },
+                    {
+                        displayName: 'Tool Usage Support',
+                        name: 'toolUsage',
+                        type: 'boolean',
+                        default: false,
+                        displayOptions: {
+                            show: {
+                                aiAgentMode: [true],
+                            },
+                        },
+                        description: 'Whether to enable PACKAGES_ALLOW_TOOL_USAGE for AI agent tool calling',
+                    },
+                    {
                         displayName: 'Top P',
                         name: 'topP',
                         type: 'number',
@@ -170,42 +206,6 @@ export class LongCat implements INodeType {
                         },
                         default: 0.9,
                         description: 'Controls diversity via nucleus sampling',
-                    },
-                    {
-                        displayName: 'Thinking Budget',
-                        name: 'thinkingBudget',
-                        type: 'number',
-                        typeOptions: {
-                            minValue: 1024,
-                            maxValue: 8192,
-                            numberPrecision: 0,
-                        },
-                        default: 2048,
-                        displayOptions: {
-                            show: {
-                                model: ['LongCat-Flash-Thinking'],
-                                enableThinking: [true],
-                            },
-                        },
-                        description: 'Maximum length of thinking content (minimum 1024)',
-                    },
-                    {
-                        displayName: 'Include Input Data',
-                        name: 'includeInputData',
-                        type: 'boolean',
-                        default: false,
-                        description: 'Include original input data in the output for downstream processing',
-                    },
-                    {
-                        displayName: 'Conversation History',
-                        name: 'conversationHistory',
-                        type: 'string',
-                        typeOptions: {
-                            rows: 3,
-                        },
-                        default: '',
-                        placeholder: '{{ $json.conversationHistory }}',
-                        description: 'Optional conversation history for context. Should be a JSON array of messages.',
                     },
                 ],
             },
